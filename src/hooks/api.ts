@@ -1,8 +1,13 @@
 import axios from 'axios';
 
+// Use HF Space directly (Netlify proxy times out on long requests)
+const API_BASE = import.meta.env.PROD
+  ? 'https://djjosesilva-infinity-soundworks-api.hf.space'
+  : 'http://localhost:7860';
+
 const api = axios.create({
-  baseURL: import.meta.env.PROD ? '' : 'http://localhost:7860',
-  timeout: 120000,
+  baseURL: API_BASE,
+  timeout: 180000,
 });
 
 const token = localStorage.getItem('token');
