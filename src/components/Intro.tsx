@@ -34,8 +34,6 @@ export default function Intro({ onFinish }: { onFinish: () => void }) {
   const [spectrum, setSpectrum] = useState<number[]>(() => Array.from({ length: 32 }, () => getRandom(10, 40)));
   const [bassEnergy, setBassEnergy] = useState(0.1);
   const [audioReady, setAudioReady] = useState(false);
-  const [duration, setDuration] = useState(45);
-  const [currentTime, setCurrentTime] = useState(0);
 
   const nextPhrase = useCallback(() => {
     setVisible(false);
@@ -69,16 +67,8 @@ export default function Intro({ onFinish }: { onFinish: () => void }) {
     const a = audioRef.current;
     if (!a) return;
     const onEnd = () => onFinish();
-    const onMeta = () => setDuration(a.duration || 45);
-    const onTime = () => setCurrentTime(a.currentTime);
     a.addEventListener('ended', onEnd);
-    a.addEventListener('loadedmetadata', onMeta);
-    a.addEventListener('timeupdate', onTime);
-    return () => {
-      a.removeEventListener('ended', onEnd);
-      a.removeEventListener('loadedmetadata', onMeta);
-      a.removeEventListener('timeupdate', onTime);
-    };
+    return () => { a.removeEventListener('ended', onEnd); };
   }, [onFinish]);
 
   // Anim loop: read spectrum + bass
@@ -110,7 +100,6 @@ export default function Intro({ onFinish }: { onFinish: () => void }) {
   }, [nextPhrase]);
 
   const bgGlow = 0.04 + bassEnergy * 0.08;
-  const remaining = Math.max(0, Math.round(duration - currentTime));
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden transition-all duration-300"
@@ -198,7 +187,7 @@ export default function Intro({ onFinish }: { onFinish: () => void }) {
 
         <div className="flex gap-3 justify-center">
           <button onClick={onFinish} className="btn-primary text-sm">
-            ✨ Entrar{started && remaining > 0 ? ` (${remaining}s)` : ''}
+            ✨ Entrar
           </button>
         </div>
 
