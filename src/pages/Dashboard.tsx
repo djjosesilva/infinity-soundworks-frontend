@@ -12,6 +12,7 @@ import Assinatura from './Assinatura';
 import Marketing from './Marketing';
 import Definicoes from './Definicoes';
 import Admin from './Admin';
+import ProInfo from './ProInfo';
 
 const TABS = [
   { path: '/', icon: '✏️', label: 'COMPOSE' },
@@ -64,9 +65,15 @@ export default function Dashboard() {
           ))}
         </nav>
         <div className="p-4 border-t border-[#2a2a2b]">
-          <Link to="/admin" className={`sidebar-link ${location.pathname === '/admin' ? 'active' : ''}`}>
-            <span>📊</span><span>ADMIN</span>
-          </Link>
+          {user?.role === 'admin' ? (
+            <Link to="/admin" className={`sidebar-link ${location.pathname === '/admin' ? 'active' : ''}`}>
+              <span>📊</span><span>ADMIN</span>
+            </Link>
+          ) : (
+            <Link to="/pro" className={`sidebar-link ${location.pathname === '/pro' ? 'active' : ''}`}>
+              <span>🚀</span><span>PRO</span>
+            </Link>
+          )}
           <div className="sidebar-link cursor-pointer" onClick={logout}><span>🚪</span><span>SAIR</span></div>
           <p className="text-xs text-gray-600 mt-2 px-4">{user?.email}</p>
         </div>
@@ -83,6 +90,7 @@ export default function Dashboard() {
           <Route path="/marketing" element={<Marketing />} />
           <Route path="/definicoes" element={<Definicoes />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/pro" element={<ProInfo />} />
         </Routes>
       </main>
     </div>
