@@ -37,10 +37,11 @@ export default function Dashboard() {
   const closeSubModal = () => { localStorage.setItem('subModalSeen', '1'); setShowSubModal(false); };
 
   useEffect(() => {
+    if (showSubModal) return;
     const interval = VIDEO_GATE_INTERVALS[Math.min(gateIndex, VIDEO_GATE_INTERVALS.length - 1)];
     const timer = setTimeout(() => setVideoGate(true), interval * 1000);
     return () => clearTimeout(timer);
-  }, [gateIndex, videoGate]);
+  }, [gateIndex, videoGate, showSubModal]);
 
   if (videoGate) {
     return <VideoGate onUnlock={() => { setVideoGate(false); setGateIndex(i => i + 1); }} />;
