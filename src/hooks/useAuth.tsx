@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import api from './api';
 
 interface User { id: number; email: string; nome: string; role: string; has_deepseek: boolean; }
-interface AuthContextType { user: User | null; loading: boolean; login: (email: string, password: string) => Promise<void>; logout: () => void; token: string | null; }
+interface AuthContextType { user: User | null; loading: boolean; login: (email: string, password: string) => Promise<string>; logout: () => void; token: string | null; }
 
 const AuthContext = createContext<AuthContextType>({ user: null, loading: true, login: async () => {}, logout: () => {}, token: null });
 
@@ -26,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('token', data.access_token);
     api.defaults.headers.common['Authorization'] = `Bearer ${data.access_token}`;
     setUser(data.user);
+    return data.system_message || '';
   };
 
   const logout = () => { localStorage.removeItem('token'); setUser(null); };

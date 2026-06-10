@@ -19,7 +19,10 @@ export default function Login() {
       if (isRegister) {
         await api.post('/api/auth/register', { email, password, nome: nome || 'DJ Jose Silva' });
       }
-      await login(email, password);
+      const sysMsg = await login(email, password);
+      if (sysMsg) {
+        alert('📢 Mensagem do Estudio:\n\n' + sysMsg);
+      }
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Erro');
