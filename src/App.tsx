@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Intro from './components/Intro';
+import TermsOfService from './components/TermsOfService';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -13,8 +14,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function IntroGate() {
-  const [showIntro, setShowIntro] = useState(true);
-  if (showIntro) return <Intro onFinish={() => setShowIntro(false)} />;
+  const [step, setStep] = useState<'intro' | 'terms' | 'login'>('intro');
+  if (step === 'intro') return <Intro onFinish={() => setStep('terms')} />;
+  if (step === 'terms') return <TermsOfService onAccept={() => setStep('login')} />;
   return <Login />;
 }
 

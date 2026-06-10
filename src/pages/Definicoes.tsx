@@ -7,12 +7,19 @@ export default function Definicoes() {
   const [deepseekKey, setDeepseekKey] = useState('');
   const [demoStatus, setDemoStatus] = useState<any>(null);
   const [saved, setSaved] = useState(false);
+  const [deleted, setDeleted] = useState(false);
 
   useEffect(() => { api.get('/api/auth/demo/status').then(r => setDemoStatus(r.data)); }, []);
 
   const saveKey = async () => {
     await api.post('/api/auth/me/api-key', { deepseek_key: deepseekKey });
-    setSaved(true); setTimeout(() => setSaved(false), 3000);
+    setSaved(true); setDeleted(false); setTimeout(() => setSaved(false), 3000);
+    api.get('/api/auth/demo/status').then(r => setDemoStatus(r.data));
+  };
+
+  const deleteKey = async () => {
+    await api.post('/api/auth/me/api-key', { deepseek_key: '' });
+    setDeepseekKey(''); setDeleted(true); setSaved(false); setTimeout(() => setDeleted(false), 3000);
     api.get('/api/auth/demo/status').then(r => setDemoStatus(r.data));
   };
 
@@ -32,8 +39,12 @@ export default function Definicoes() {
       <div className="glass-card p-4 space-y-3">
         <label className="mono-label">🔑 DeepSeek API Key</label>
         <input type="password" className="glass-input" value={deepseekKey} onChange={e => setDeepseekKey(e.target.value)} placeholder="sk-..." />
-        <button onClick={saveKey} className="btn-primary w-full">💾 GUARDAR</button>
+        <div className="flex gap-2">
+          <button onClick={saveKey} className="btn-primary flex-1">💾 GUARDAR</button>
+          <button onClick={deleteKey} className="btn-glass flex-1 text-red-400">🗑️ APAGAR API</button>
+        </div>
         {saved && <p className="text-status-success text-xs">✅ Key guardada!</p>}
+        {deleted && <p className="text-xs text-red-400">🗑️ API Key removida</p>}
       </div>
 
       <div className="mt-4 glass-card p-4">
