@@ -13,11 +13,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function IntroGate() {
-  const [showIntro, setShowIntro] = useState(false);
-  useEffect(() => {
-    if (!localStorage.getItem('introSeen')) setShowIntro(true);
-  }, []);
-  if (showIntro) return <Intro onFinish={() => { localStorage.setItem('introSeen', '1'); setShowIntro(false); }} />;
+  const [showIntro, setShowIntro] = useState(true);
+  if (showIntro) return <Intro onFinish={() => setShowIntro(false)} />;
   return <Login />;
 }
 
