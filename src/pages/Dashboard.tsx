@@ -2,6 +2,7 @@ import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import VideoGate from '../components/VideoGate';
+import SubscriptionModal from '../components/SubscriptionModal';
 import Compose from './Compose';
 import Galeria from './Galeria';
 import Forense from './Forense';
@@ -30,6 +31,9 @@ export default function Dashboard() {
   const location = useLocation();
   const [videoGate, setVideoGate] = useState(false);
   const [gateIndex, setGateIndex] = useState(0);
+  const [showSubModal, setShowSubModal] = useState(!localStorage.getItem('subModalSeen'));
+
+  const closeSubModal = () => { localStorage.setItem('subModalSeen', '1'); setShowSubModal(false); };
 
   useEffect(() => {
     const interval = VIDEO_GATE_INTERVALS[Math.min(gateIndex, VIDEO_GATE_INTERVALS.length - 1)];
@@ -39,6 +43,10 @@ export default function Dashboard() {
 
   if (videoGate) {
     return <VideoGate onUnlock={() => { setVideoGate(false); setGateIndex(i => i + 1); }} />;
+  }
+
+  if (showSubModal) {
+    return <SubscriptionModal onClose={closeSubModal} />;
   }
 
   return (
