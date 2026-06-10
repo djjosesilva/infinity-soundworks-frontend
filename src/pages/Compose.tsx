@@ -4,16 +4,23 @@ import api from '../hooks/api';
 export default function Compose() {
   const [tema, setTema] = useState('');
   const [estilo, setEstilo] = useState('Fado + Deep House');
+  const [excludeStyle, setExcludeStyle] = useState('');
   const [bpm, setBpm] = useState(120);
   const [key, setKey] = useState('Cm');
   const [idioma, setIdioma] = useState('PT-PT');
+  const [vocalGender, setVocalGender] = useState('male');
+  const [weirdness, setWeirdness] = useState(0.5);
+  const [styleInfluence, setStyleInfluence] = useState('');
   const [resultado, setResultado] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   const compor = async () => {
     setLoading(true);
     try {
-      const { data } = await api.post('/api/compose/zacor', { tema, estilo, bpm, key, idioma });
+      const { data } = await api.post('/api/compose/zacor', {
+        tema, estilo, exclude_style: excludeStyle, bpm, key, idioma,
+        vocal_gender: vocalGender, weirdness, style_influence: styleInfluence
+      });
       setResultado(data);
     } catch (e: any) { alert(e.response?.data?.detail || 'Erro'); }
     finally { setLoading(false); }
@@ -30,18 +37,30 @@ export default function Compose() {
           <textarea className="glass-input h-32" value={tema} onChange={e => setTema(e.target.value)} placeholder="Descreve a tua musica..." />
         </div>
         <div className="space-y-3">
-          <div><label className="mono-label">Estilo</label><select className="glass-input" value={estilo} onChange={e => setEstilo(e.target.value)}>
-            {['Fado + Deep House','Fado','Deep House','Kizomba','Pop','Eletrónica','Rock','Jazz','Bossa Nova'].map(s => <option key={s}>{s}</option>)}
-          </select></div>
+          <div className="grid grid-cols-2 gap-2">
+            <div><label className="mono-label">Estilo</label><select className="glass-input" value={estilo} onChange={e => setEstilo(e.target.value)}>
+              {['Fado + Deep House','Fado','Deep House','Kizomba','Pop','Eletrónica','Rock','Jazz','Bossa Nova'].map(s => <option key={s}>{s}</option>)}
+            </select></div>
+            <div><label className="mono-label">Exclude Style</label><input className="glass-input" value={excludeStyle} onChange={e => setExcludeStyle(e.target.value)} placeholder="Rock, Jazz, ...)" /></div>
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <div><label className="mono-label">BPM</label><input type="number" className="glass-input" value={bpm} onChange={e => setBpm(+e.target.value)} /></div>
             <div><label className="mono-label">Key</label><select className="glass-input" value={key} onChange={e => setKey(e.target.value)}>
               {['Cm','Am','Em','Dm','F#m','Gm','C','G','D','F','A','E'].map(k => <option key={k}>{k}</option>)}
             </select></div>
           </div>
-          <div><label className="mono-label">Idioma</label><select className="glass-input" value={idioma} onChange={e => setIdioma(e.target.value)}>
-            {['PT-PT','PT-BR','EN','ES','FR'].map(l => <option key={l}>{l}</option>)}
-          </select></div>
+          <div className="grid grid-cols-2 gap-2">
+            <div><label className="mono-label">Idioma</label><select className="glass-input" value={idioma} onChange={e => setIdioma(e.target.value)}>
+              {['PT-PT','PT-BR','EN','ES','FR'].map(l => <option key={l}>{l}</option>)}
+            </select></div>
+            <div><label className="mono-label">Vocal Gender</label><select className="glass-input" value={vocalGender} onChange={e => setVocalGender(e.target.value)}>
+              {['male','female','duet'].map(g => <option key={g}>{g}</option>)}
+            </select></div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div><label className="mono-label">Weirdness ({weirdness})</label><input type="range" min="0" max="1" step="0.1" className="w-full accent-primary" value={weirdness} onChange={e => setWeirdness(+e.target.value)} /></div>
+            <div><label className="mono-label">Style Influence</label><input className="glass-input" value={styleInfluence} onChange={e => setStyleInfluence(e.target.value)} placeholder="David Bowie, Radiohead..." /></div>
+          </div>
         </div>
       </div>
 
