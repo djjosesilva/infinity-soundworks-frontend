@@ -4,7 +4,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://YOUR-HF-SPACE.hf.space/api/:splat"
+  to = "https://djjosesilva-infinity-soundworks-api.hf.space/api/:splat"
   status = 200
 
 [[redirects]]
