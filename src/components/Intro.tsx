@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 const FRASES = [
   "A música é a alma do infinito.",
@@ -26,6 +26,8 @@ export default function Intro({ onFinish }: { onFinish: () => void }) {
     note: NOTES[Math.floor(Math.random() * NOTES.length)],
   })));
   const [countdown, setCountdown] = useState(15);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [audioPlaying, setAudioPlaying] = useState(false);
 
   const nextPhrase = useCallback(() => {
     setVisible(false);
@@ -39,9 +41,23 @@ export default function Intro({ onFinish }: { onFinish: () => void }) {
     return () => { clearInterval(phraseTimer); clearInterval(cdTimer); clearTimeout(autoSkip); };
   }, [nextPhrase, onFinish]);
 
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    a.volume = 0.35;
+    a.play().then(() => setAudioPlaying(true)).catch(() => {});
+  }, []);
+
+  const toggleAudio = () => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (a.paused) { a.play(); setAudioPlaying(true); }
+    else { a.pause(); setAudioPlaying(false); }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden" style={{ background: 'radial-gradient(ellipse at 50% 30%, #001a2e 0%, #0A0A0B 60%)' }}>
-      {/* Particulas musicais */}
+      <audio ref={audioRef} src="/audio/intro.mp3" loop preload="auto" />{/* Particulas musicais */}
       {particles.map(p => (
         <span key={p.id} className="absolute text-cyan-400/20 pointer-events-none select-none"
           style={{ left: `${p.x}%`, fontSize: `${p.size * 6}px`,
@@ -59,6 +75,12 @@ export default function Intro({ onFinish }: { onFinish: () => void }) {
             animationDelay: `${i * 0.05}s`
           }} />
         ))}
+      </div>
+
+      <div className="absolute top-4 right-4 z-20">
+        <button onClick={toggleAudio} className="text-xl opacity-60 hover:opacity-100 transition-opacity" title={audioPlaying ? 'Pausar música' : 'Tocar música'}>
+          {audioPlaying ? '🔊' : '🔈'}
+        </button>
       </div>
 
       {/* Logo + Titulo */}
