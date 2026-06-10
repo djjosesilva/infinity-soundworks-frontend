@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 
 const PLAYLIST = [
-  'OOllTNyvaco', '4CvvSp95PbE', '6O__7XYiTtQ', 'kejwP4oMErE', 'SS3tYx_lST0'
+  'OOllTNyvaco', '4CvvSp95PbE', '6O__7XYiTtQ', 'kejwP4oMErE'
 ];
 
 const CANAL = 'https://www.youtube.com/@musicnowstop';
