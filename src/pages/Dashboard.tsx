@@ -53,8 +53,8 @@ export default function Dashboard() {
     <div className="flex h-screen">
       <aside className="w-[280px] bg-surface border-r border-[#2a2a2b] flex flex-col shrink-0">
         <div className="p-4 border-b border-[#2a2a2b]">
-          <Link to="/" className="font-sora text-lg font-bold text-primary glow-text no-underline">INFINITY</Link>
-          <p className="mono-label mt-1">DJ José Silva</p>
+          <Link to="/" className="font-sora text-lg font-bold text-primary glow-text no-underline">INFINITY DEMO</Link>
+          <p className="mono-label mt-1">{user?.nome || 'DJ José Silva'}</p>
         </div>
         <nav className="flex-1 py-2">
           {TABS.map(tab => (
