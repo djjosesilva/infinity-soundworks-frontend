@@ -8,17 +8,34 @@ function tryParse(text: string) {
 export default function Beatriz() {
   const [msg, setMsg] = useState('');
   const [chat, setChat] = useState<{ role: string; text: string }[]>([]);
+  const [letra, setLetra] = useState('');
+  const [showLetra, setShowLetra] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   const send = async () => {
     if (!msg.trim()) return;
-    setChat(prev => [...prev, { role: 'user', text: msg }]);
+    const userMsg = msg;
+    setChat(prev => [...prev, { role: 'user', text: userMsg }]);
+    setMsg('');
     try {
-      const { data } = await api.post('/api/beatriz/chat', { message: msg, idioma: 'PT-PT' });
+      const body: any = { message: userMsg, idioma: 'PT-PT' };
+      if (letra) body.letra = letra;
+      const { data } = await api.post('/api/beatriz/chat', body);
+      if (letra && data.response) setLetra(''); // limpa letra depois de analisar
       const text = data.response || (data.data ? JSON.stringify(data.data) : 'Sem resposta');
       setChat(prev => [...prev, { role: 'beatriz', text }]);
     } catch { setChat(prev => [...prev, { role: 'beatriz', text: 'Erro de conexao' }]); }
-    setMsg('');
+  };
+
+  const analyzeLyrics = async () => {
+    if (!letra.trim()) return;
+    setChat(prev => [...prev, { role: 'user', text: '📩 Letra enviada para analise' }]);
+    try {
+      const { data } = await api.post('/api/beatriz/chat', { message: 'analisa', letra, idioma: 'PT-PT' });
+      setChat(prev => [...prev, { role: 'beatriz', text: data.response || JSON.stringify(data.data || data) }]);
+      setLetra('');
+      setShowLetra(false);
+    } catch { setChat(prev => [...prev, { role: 'beatriz', text: 'Erro na analise' }]); }
   };
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chat]);
@@ -46,7 +63,20 @@ export default function Beatriz() {
   return (
     <div>
       <h1 className="font-sora text-2xl font-bold mb-1">🧠 BEATRIZ</h1>
-      <p className="mono-label mb-6">Psicologia Musical v2.0</p>
+      <p className="mono-label mb-2">Psicologia Musical v2.0</p>
+
+      <div className="flex gap-2 mb-3">
+        <button onClick={() => setShowLetra(!showLetra)} className={`btn-glass text-xs ${showLetra || letra ? '!border-primary !text-primary' : ''}`}>📝 Analisar Letra</button>
+        {letra && <span className="text-xs text-gray-500 self-center">{letra.length} caracteres</span>}
+      </div>
+
+      {showLetra && (
+        <div className="glass-card p-3 mb-3 space-y-2">
+          <textarea className="glass-input h-32 text-sm" value={letra} onChange={e => setLetra(e.target.value)} placeholder="Cola a letra completa aqui..." />
+          <button onClick={analyzeLyrics} disabled={!letra.trim()} className="btn-primary w-full text-xs">🔍 Analisar Letra</button>
+        </div>
+      )}
+
       <div className="glass-card p-4 h-96 overflow-auto mb-3 space-y-2">
         {chat.map((c, i) => (
           <div key={i} className={`p-3 rounded ${c.role === 'beatriz' ? 'bg-[rgba(0,209,255,0.03)] border-l-2 border-primary' : 'bg-[rgba(255,255,255,0.02)] border-l-2 border-gray-600'}`}>
