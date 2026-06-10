@@ -38,9 +38,14 @@ export default function Compose() {
         </div>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
-            <div><label className="mono-label">Estilo</label><select className="glass-input" value={estilo} onChange={e => setEstilo(e.target.value)}>
-              {['Fado + Deep House','Fado','Deep House','Kizomba','Pop','Eletrónica','Rock','Jazz','Bossa Nova'].map(s => <option key={s}>{s}</option>)}
-            </select></div>
+            <div>
+              <label className="mono-label">Estilo</label>
+              <input className="glass-input" value={estilo} onChange={e => setEstilo(e.target.value)}
+                list="estilo-sugestoes" placeholder="Pimba + Rock, Fado + Deep House..." />
+              <datalist id="estilo-sugestoes">
+                {['Fado + Deep House','Fado','Deep House','Pimba','Pimba + Rock','Kizomba','Afro House','Kuduro','Pop','Eletrónica','Rock','Jazz','Bossa Nova','RnB','Hip Hop','Reggaeton'].map(s => <option key={s} value={s} />)}
+              </datalist>
+            </div>
             <div><label className="mono-label">Exclude Style</label><input className="glass-input" value={excludeStyle} onChange={e => setExcludeStyle(e.target.value)} placeholder="Rock, Jazz, ...)" /></div>
           </div>
           <div className="grid grid-cols-2 gap-2">
