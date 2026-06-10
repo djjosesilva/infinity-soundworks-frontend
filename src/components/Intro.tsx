@@ -25,46 +25,61 @@ export default function Intro({ onFinish }: { onFinish: () => void }) {
     id: i, x: getRandom(5, 95), delay: getRandom(0, 5), dur: getRandom(3, 7), size: getRandom(2, 6),
     note: NOTES[Math.floor(Math.random() * NOTES.length)],
   })));
-  const [countdown, setCountdown] = useState(15);
   const audioRef = useRef<HTMLAudioElement>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [started, setStarted] = useState(false);
+  const [overlayVisible, setOverlayVisible] = useState(false);
 
-  // Spectrum: 32 barras (graves 0-3, medios 4-15, agudos 16-31)
   const [spectrum, setSpectrum] = useState<number[]>(() => Array.from({ length: 32 }, () => getRandom(10, 40)));
   const [bassEnergy, setBassEnergy] = useState(0.1);
   const [audioReady, setAudioReady] = useState(false);
+  const [duration, setDuration] = useState(45);
+  const [currentTime, setCurrentTime] = useState(0);
 
   const nextPhrase = useCallback(() => {
     setVisible(false);
     setTimeout(() => { setIdx(i => (i + 1) % FRASES.length); setVisible(true); }, 500);
   }, []);
 
-  // Init audio + analyser
+  // Fade in overlay
+  useEffect(() => { setTimeout(() => setOverlayVisible(true), 400); }, []);
+
+  // Click to start: init audio context + play
+  const handleStart = () => {
+    const a = audioRef.current;
+    if (!a) return;
+    const ctx = new AudioContext();
+    const src = ctx.createMediaElementSource(a);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 128;
+    analyser.smoothingTimeConstant = 0.7;
+    src.connect(analyser);
+    analyser.connect(ctx.destination);
+    audioCtxRef.current = ctx;
+    analyserRef.current = analyser;
+    setAudioReady(true);
+    a.volume = 0.35;
+    a.play();
+    setStarted(true);
+  };
+
+  // onEnded: transition to login when music finishes
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
-    a.volume = 0.35;
-
-    const initCtx = () => {
-      if (audioCtxRef.current) return;
-      const ctx = new AudioContext();
-      const src = ctx.createMediaElementSource(a);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 128;
-      analyser.smoothingTimeConstant = 0.7;
-      src.connect(analyser);
-      analyser.connect(ctx.destination);
-      audioCtxRef.current = ctx;
-      analyserRef.current = analyser;
-      setAudioReady(true);
+    const onEnd = () => onFinish();
+    const onMeta = () => setDuration(a.duration || 45);
+    const onTime = () => setCurrentTime(a.currentTime);
+    a.addEventListener('ended', onEnd);
+    a.addEventListener('loadedmetadata', onMeta);
+    a.addEventListener('timeupdate', onTime);
+    return () => {
+      a.removeEventListener('ended', onEnd);
+      a.removeEventListener('loadedmetadata', onMeta);
+      a.removeEventListener('timeupdate', onTime);
     };
-
-    a.addEventListener('play', initCtx, { once: true });
-    a.play().then(() => setAudioPlaying(true)).catch(() => {});
-    return () => { a.removeEventListener('play', initCtx); a.pause(); };
-  }, []);
+  }, [onFinish]);
 
   // Anim loop: read spectrum + bass
   useEffect(() => {
@@ -73,15 +88,13 @@ export default function Intro({ onFinish }: { onFinish: () => void }) {
     const loop = () => {
       const analyser = analyserRef.current;
       if (!analyser) return;
-      const bufferLength = analyser.frequencyBinCount; // 64 for fftSize=128
+      const bufferLength = analyser.frequencyBinCount;
       const data = new Uint8Array(bufferLength);
       analyser.getByteFrequencyData(data);
-      // Map 64 buckets → 32 bars (smooth)
       const bars: number[] = [];
       for (let i = 0; i < 32; i++) {
         bars.push((data[i * 2] + data[i * 2 + 1]) / 2);
       }
-      // Bass: first 8 buckets (≈ 0-344Hz at 44100)
       const bass = bars.slice(0, 8).reduce((a, b) => a + b, 0) / (8 * 255);
       setSpectrum(bars);
       setBassEnergy(Math.max(0.05, bass));
@@ -93,24 +106,43 @@ export default function Intro({ onFinish }: { onFinish: () => void }) {
 
   useEffect(() => {
     const phraseTimer = setInterval(nextPhrase, 6000);
-    const cdTimer = setInterval(() => setCountdown(c => c - 1), 1000);
-    const autoSkip = setTimeout(onFinish, 18000);
-    return () => { clearInterval(phraseTimer); clearInterval(cdTimer); clearTimeout(autoSkip); };
-  }, [nextPhrase, onFinish]);
-
-  const toggleAudio = () => {
-    const a = audioRef.current;
-    if (!a) return;
-    if (a.paused) { a.play(); setAudioPlaying(true); }
-    else { a.pause(); setAudioPlaying(false); }
-  };
+    return () => { clearInterval(phraseTimer); };
+  }, [nextPhrase]);
 
   const bgGlow = 0.04 + bassEnergy * 0.08;
+  const remaining = Math.max(0, Math.round(duration - currentTime));
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden transition-all duration-300"
       style={{ background: `radial-gradient(ellipse at 50% 30%, rgba(0,209,255,${bgGlow}) 0%, #0A0A0B 60%)` }}>
-      <audio ref={audioRef} src="/audio/intro.mp3" loop preload="auto" crossOrigin="anonymous" />
+      <audio ref={audioRef} src="/audio/intro.mp3" preload="auto" crossOrigin="anonymous" />
+
+      {/* Click to start overlay */}
+      {!started && (
+        <div onClick={handleStart} className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 cursor-pointer transition-opacity duration-700"
+          style={{ opacity: overlayVisible ? 1 : 0 }}>
+          <div className="text-center px-8"
+            style={{ animation: 'pulse-glow 2s ease-in-out infinite' }}>
+            <svg width="140" height="140" viewBox="0 0 200 200" className="mx-auto mb-6">
+              <defs>
+                <linearGradient id="gS" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#00d1ff" />
+                  <stop offset="100%" stopColor="#BC13FE" />
+                </linearGradient>
+              </defs>
+              <circle cx="100" cy="100" r="95" fill="none" stroke="url(#gS)" strokeWidth="3" strokeDasharray="8 6" opacity="0.3">
+                <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="20s" repeatCount="indefinite" />
+              </circle>
+              <circle cx="100" cy="100" r="45" fill="url(#gS)" opacity="0.85">
+                <animate attributeName="r" values="42;48;42" dur="2.5s" repeatCount="indefinite" />
+              </circle>
+              <polygon points="90,75 90,125 125,100" fill="#0A0A0B" />
+            </svg>
+            <p className="font-sora text-2xl font-bold text-primary mb-2">Clique para Iniciar</p>
+            <p className="text-sm text-gray-500 mono-label">INFINITY SOUNDWORKS</p>
+          </div>
+        </div>
+      )}
 
       {/* Particulas reagem a bassEnergy */}
       {particles.map(p => (
@@ -129,12 +161,6 @@ export default function Intro({ onFinish }: { onFinish: () => void }) {
             height: `${Math.max(2, val / 255 * 100)}%`,
           }} />
         ))}
-      </div>
-
-      <div className="absolute top-4 right-4 z-20">
-        <button onClick={toggleAudio} className="text-xl opacity-60 hover:opacity-100 transition-opacity" title={audioPlaying ? 'Pausar música' : 'Tocar música'}>
-          {audioPlaying ? '🔊' : '🔈'}
-        </button>
       </div>
 
       {/* Logo + Titulo */}
@@ -172,7 +198,7 @@ export default function Intro({ onFinish }: { onFinish: () => void }) {
 
         <div className="flex gap-3 justify-center">
           <button onClick={onFinish} className="btn-primary text-sm">
-            ✨ Entrar ({countdown}s)
+            ✨ Entrar{started && remaining > 0 ? ` (${remaining}s)` : ''}
           </button>
         </div>
 
