@@ -1,5 +1,7 @@
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import VideoGate from '../components/VideoGate';
 import Compose from './Compose';
 import Galeria from './Galeria';
 import Forense from './Forense';
@@ -21,9 +23,23 @@ const TABS = [
   { path: '/definicoes', icon: '⚙️', label: 'DEFS' },
 ];
 
+const VIDEO_GATE_INTERVALS = [2 * 60, 30 * 60, 60 * 60]; // 2min, 30min, 60min (seconds)
+
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const [videoGate, setVideoGate] = useState(false);
+  const [gateIndex, setGateIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = VIDEO_GATE_INTERVALS[Math.min(gateIndex, VIDEO_GATE_INTERVALS.length - 1)];
+    const timer = setTimeout(() => setVideoGate(true), interval * 1000);
+    return () => clearTimeout(timer);
+  }, [gateIndex, videoGate]);
+
+  if (videoGate) {
+    return <VideoGate onUnlock={() => { setVideoGate(false); setGateIndex(i => i + 1); }} />;
+  }
 
   return (
     <div className="flex h-screen">

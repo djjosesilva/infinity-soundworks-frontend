@@ -1,6 +1,8 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Intro from './components/Intro';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -10,11 +12,20 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function IntroGate() {
+  const [showIntro, setShowIntro] = useState(false);
+  useEffect(() => {
+    if (!localStorage.getItem('introSeen')) setShowIntro(true);
+  }, []);
+  if (showIntro) return <Intro onFinish={() => { localStorage.setItem('introSeen', '1'); setShowIntro(false); }} />;
+  return <Login />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<IntroGate />} />
         <Route path="/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       </Routes>
     </AuthProvider>
